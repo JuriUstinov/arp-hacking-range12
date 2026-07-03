@@ -11,24 +11,16 @@
     state: present
     update_cache: true
 
-- name: Configure network
-  copy:
-    dest: /etc/network/interfaces
-    content: |
-      source /etc/network/interfaces.d/*
-
-      auto lo
-      iface lo inet loopback
-
-      allow-hotplug enp0s3
-      iface enp0s3 inet dhcp
-
-      # Auf eth1 geändert und auf 'auto' gesetzt
-      auto eth1
-      iface eth1 inet static
-      address {{ client_ip }}/24
-      hwaddress ether {{ client_mac }}
-  register: network_config
+- name: Configure Kali Network via NetworkManager (nmcli)
+  shell: |
+    nmcli connection delete eth1 || true
+    nmcli connection add type ethernet con-name eth1 ifname eth1 ip4 10.10.30.6/24
+    nmcli connection modify eth1 ethernet.cloned-mac-address {{ client_mac }}
+    nmcli connection modify eth1 ethernet.mac-address-randomization 1
+    nmcli connection up eth1
+  async: 10
+  poll: 0
+  ignore_unreachable: true
 
 - name: Configure nftables
   copy:
