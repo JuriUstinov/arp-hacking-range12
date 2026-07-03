@@ -30,20 +30,12 @@
       hwaddress ether {{ client_mac }}
   register: network_config
 
-- name: Force MAC address change via ip link
+- name: Force MAC and IP address change sequentially
   shell: |
     ip link set dev eth1 down
+    ip address flush dev eth1
     ip link set dev eth1 address {{ client_mac }}
-    ip link set dev eth1 up
-  when: network_config.changed
-  async: 10
-  poll: 0
-  ignore_unreachable: true
-
-- name: Force IP address change via ip add
-  shell: |
-    ip link set dev eth1 down
-    ip a add 10.10.30.6/24 dev eth1
+    ip address add 10.10.30.6/24 dev eth1
     ip link set dev eth1 up
   when: network_config.changed
   async: 10
